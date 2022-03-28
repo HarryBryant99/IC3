@@ -1,0 +1,18 @@
+Beipielprogramme:
+  javac -cp .:org.sat4j.core.jar beispiele/Test.java
+  java -cp .:org.sat4j.core.jar beispiele/Test
+ 
+  javac -cp .:org.sat4j.core.jar beispiele/Sudoku.java
+  java -cp .:org.sat4j.core.jar beispiele/Sudoku
+ 
+  javac -cp .:org.sat4j.core.jar beispiele/ZiegeKohlWolfHirte.java
+  java -cp .:org.sat4j.core.jar beispiele/ZiegeKohlWolfHirte
+
+Für die Tests auf Erfüllbarkeit wird der Sat-Solver SAT4J verwendet.
+Dieser ist in der Datei org.sat4j.core.jar enthalten, welche für die
+Kompilation und Ausführung im CLASSPATH stehen muss.
+
+SAT4J kann auch wie ZCHAFF als eigenständiger Sat-Solver benutzt
+werden, der seine Eingabe als Textdatei im DIMACS-Format erhält.
+Aufruf dann:
+  java -jar org.sat4j.core.jar formel.dimacs

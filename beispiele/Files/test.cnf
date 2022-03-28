@@ -1,0 +1,5 @@
+c transitions.cnf
+c
+p cnf 4 5
+1 0
+-1 0
