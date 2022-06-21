@@ -122,10 +122,10 @@ public class IC3 {
         System.out.println("current dir = " + path);
 
         //Read in the Dimacs CNFs
-        initialClauses = readCNF(path + "initial3.cnf");
-        safetyFile = path + "safety3.cnf";
+        initialClauses = readCNF(path + "initial.cnf");
+        safetyFile = path + "safety.cnf";
         safetyClauses = readCNF(safetyFile);
-        transitionClauses = readCNF(path + "transitions3.cnf");
+        transitionClauses = readCNF(path + "transitions.cnf");
 
     /*Loop through all the elements in each of the transition clauses, finding the absolute max. This indicates how
     many VarName variables are needed in the system

@@ -1,0 +1,1 @@
+javac -cp .;org.sat4j.core.jar beispiele/IC3.java
