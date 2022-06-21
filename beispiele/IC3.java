@@ -628,79 +628,11 @@ public class IC3 {
 
                 System.out.println("Counter Example:" + counterClause);
 
-                /*Check if the the first the counter example holds with the first invariant via F1 /\ ¬s /\ T => ¬s'
-                If this holds continue, otherwise there is a fault in the safety property
-                 */
-                Formula counterCheck = invariants.get(0).getInvariant();
-                counterCheck = and(counterCheck, neg(counterExample));
-                counterCheck = and(counterCheck, listToFormula(transitionClauses, false, false));
-                counterCheck = and(counterCheck, (counterExamplePrimed));
+                boolean isSCCorrect = erroneousPhase(counter);
 
-                /* If ¬(F1 /\ ¬s /\ T => ¬s) is unsatisfiable the safety property is fine so continue, otherwise break and
-                output that it is incorrect
-                */
-                //if (isSatisfiable(neg(counterCheck))) {
-                if (!isSatisfiable(counterCheck)) {
-
-                    System.out.println("sat");
-
-                    //Variable to count the latest invariant that ¬s holds in
-                    int l = 0;
-
-                    //Variable to store if ¬s holds for an invariant
-                    boolean isUnsat = false;
-
-                    //Save the counter examples produced, file needs wiping before use
-                    //saveCounterExample(counterClause);
-
-                    /* For each invariant, check if ¬s holds under it. If so add ¬s to the invariant to update it. Each
-                    time incrementing l by 1. This continues until either ¬s is not satisiable (Fk /\ ¬s /\ T => not s'
-                    is unsatisfiable) or l is greater than the total number of invariants
-                     */
-                    do {
-                        //Invariant at position l
-                        invariants.get(l).setInvariant(and(invariants.get(l).getInvariant(), neg(counterExample)));
-                        System.out.println("\n F" + (l + 1) + ": "  + invariants.get(l).getInvariant() + "\n");
-
-                        /*Check if ¬(Fk /\ ¬s /\ T => ¬s') is satisfiable, if so add it to the invariant and continue
-                        to the next invariant providing there is another invariant left to check. If it is unsatisfiable
-                        then
-                         */
-                        counterCheck = invariants.get(l).getInvariant();
-                        counterCheck = and(counterCheck, neg(counterExample));
-                        counterCheck = and(counterCheck, listToFormula(transitionClauses, false, false));
-                        counterCheck = and(counterCheck, (counterExamplePrimed));
-
-                        if (!isSatisfiable(counterCheck)) {
-                            //Update the new invariant
-                            isUnsat = true;
-                            invariantClauses = readCNF(path + "F" + (l + 1) + ".cnf");
-                            invariantClauses.add(counterClause);
-                            invariants.get(l).setInvariant(listToFormula(invariantClauses, false, false));
-                            saveInvariant(invariantClauses, "F" + (l + 1));
-
-                            //Set counter to be at this invariant
-                            counter = l;
-                        } else {
-                            isUnsat = false;
-                        }
-
-                        //Increment l to check the nect invariant
-                        l++;
-                    } while (isUnsat && (l < invariants.size()));
-
-                    System.out.println("Invariant clauses: " + invariantClauses);
-
-                    //Set the old invariant to equal the new one
-                    invariantOld = invariantNew;
-                    //New invariant constructed to include the counter example
-                    invariantNew = listToFormula(invariantClauses, false, false);
-                } else {
-                    //Finish the iteration phase as the safety property is incorrect
-                    System.out.println("Safety does not hold\n");
+                if (!isSCCorrect){
                     break;
                 }
-
             } else {
                 //As (Fk /\ T /\ ¬P') holds, create a new invariant via the holding phase
                 System.out.println("Go to Holding Phase\n");
@@ -884,6 +816,83 @@ public class IC3 {
         } catch (IOException e) { // If there was a problem writing, gives feedback.
             System.err.println("Caught IO error, writing to users.txt");
             System.exit(-1);
+        }
+    }
+
+    private static boolean erroneousPhase(int counter) throws TimeoutException, IOException {
+        /*Check if the the first the counter example holds with the first invariant via F1 /\ ¬s /\ T => ¬s'
+                If this holds continue, otherwise there is a fault in the safety property
+                 */
+        Formula counterCheck = invariants.get(0).getInvariant();
+        counterCheck = and(counterCheck, neg(counterExample));
+        counterCheck = and(counterCheck, listToFormula(transitionClauses, false, false));
+        counterCheck = and(counterCheck, (counterExamplePrimed));
+
+                /* If ¬(F1 /\ ¬s /\ T => ¬s) is unsatisfiable the safety property is fine so continue, otherwise break and
+                output that it is incorrect
+                */
+        //if (isSatisfiable(neg(counterCheck))) {
+        if (!isSatisfiable(counterCheck)) {
+
+            System.out.println("sat");
+
+            //Variable to count the latest invariant that ¬s holds in
+            int l = 0;
+
+            //Variable to store if ¬s holds for an invariant
+            boolean isUnsat = false;
+
+            //Save the counter examples produced, file needs wiping before use
+            //saveCounterExample(counterClause);
+
+                    /* For each invariant, check if ¬s holds under it. If so add ¬s to the invariant to update it. Each
+                    time incrementing l by 1. This continues until either ¬s is not satisiable (Fk /\ ¬s /\ T => not s'
+                    is unsatisfiable) or l is greater than the total number of invariants
+                     */
+            do {
+                //Invariant at position l
+                invariants.get(l).setInvariant(and(invariants.get(l).getInvariant(), neg(counterExample)));
+                System.out.println("\n F" + (l + 1) + ": "  + invariants.get(l).getInvariant() + "\n");
+
+                        /*Check if ¬(Fk /\ ¬s /\ T => ¬s') is satisfiable, if so add it to the invariant and continue
+                        to the next invariant providing there is another invariant left to check. If it is unsatisfiable
+                        then
+                         */
+                counterCheck = invariants.get(l).getInvariant();
+                counterCheck = and(counterCheck, neg(counterExample));
+                counterCheck = and(counterCheck, listToFormula(transitionClauses, false, false));
+                counterCheck = and(counterCheck, (counterExamplePrimed));
+
+                if (!isSatisfiable(counterCheck)) {
+                    //Update the new invariant
+                    isUnsat = true;
+                    invariantClauses = readCNF(path + "F" + (l + 1) + ".cnf");
+                    invariantClauses.add(counterClause);
+                    invariants.get(l).setInvariant(listToFormula(invariantClauses, false, false));
+                    saveInvariant(invariantClauses, "F" + (l + 1));
+
+                    //Set counter to be at this invariant
+                    counter = l;
+                } else {
+                    isUnsat = false;
+                }
+
+                //Increment l to check the next invariant
+                l++;
+            } while (isUnsat && (l < invariants.size()));
+
+            System.out.println("Invariant clauses: " + invariantClauses);
+
+            //Set the old invariant to equal the new one
+            invariantOld = invariantNew;
+            //New invariant constructed to include the counter example
+            invariantNew = listToFormula(invariantClauses, false, false);
+
+            return true;
+        } else {
+            //Finish the iteration phase as the safety property is incorrect
+            System.out.println("Safety does not hold\n");
+            return false;
         }
     }
 }
