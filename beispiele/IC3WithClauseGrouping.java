@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
  * <p> Creation Date: 14/03/21 </p>
  * <p> Last Modification Date: 25/03/21 </p>
  */
-public class IC3 {
+public class IC3WithClauseGrouping {
     //The number of variables in the automaton (and their prime equivalents). Set to 4 as this is lowest amount
     private static short numberOfVars = 4;
 
@@ -828,13 +828,15 @@ public class IC3 {
         counterCheck = and(counterCheck, listToFormula(transitionClauses, false, false));
         counterCheck = and(counterCheck, (counterExamplePrimed));
 
-                /* If ¬(F1 /\ ¬s /\ T => ¬s) is unsatisfiable the safety property is fine so continue, otherwise break and
-                output that it is incorrect
-                */
+        /* If ¬(F1 /\ ¬s /\ T => ¬s) is unsatisfiable the safety property is fine so continue, otherwise break and
+        output that it is incorrect
+        */
         //if (isSatisfiable(neg(counterCheck))) {
         if (!isSatisfiable(counterCheck)) {
 
             System.out.println("sat");
+
+            System.out.println(getClause(0,3));
 
             //Variable to count the latest invariant that ¬s holds in
             int l = 0;
@@ -845,10 +847,10 @@ public class IC3 {
             //Save the counter examples produced, file needs wiping before use
             //saveCounterExample(counterClause);
 
-                    /* For each invariant, check if ¬s holds under it. If so add ¬s to the invariant to update it. Each
-                    time incrementing l by 1. This continues until either ¬s is not satisiable (Fk /\ ¬s /\ T => not s'
-                    is unsatisfiable) or l is greater than the total number of invariants
-                     */
+            /* For each invariant, check if ¬s holds under it. If so add ¬s to the invariant to update it. Each
+            time incrementing l by 1. This continues until either ¬s is not satisiable (Fk /\ ¬s /\ T => not s'
+            is unsatisfiable) or l is greater than the total number of invariants
+             */
             do {
                 //Invariant at position l
                 invariants.get(l).setInvariant(and(invariants.get(l).getInvariant(), neg(counterExample)));
@@ -894,5 +896,13 @@ public class IC3 {
             System.out.println("Safety does not hold\n");
             return false;
         }
+    }
+
+    private static Formula getClause(int counter, int length){
+        String clause = "";
+        for (int i = counter; i < length; i++) {
+            clause += counterClause.get(i) + " ";
+        }
+        return listToFormula(counterClause.subList(counter, length),false,false);
     }
 }
