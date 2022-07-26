@@ -9,10 +9,10 @@ import org.sat4j.specs.TimeoutException;
 public class Test {
 
   public static void main(String[] args) throws TimeoutException {
-    VarName a = freshVarName();
-    VarName b = freshVarName();
-    VarName c = freshVarName();
-    VarName d = freshVarName();
+    VarName x1 = freshVarName();
+    VarName x2 = freshVarName();
+    VarName x3 = freshVarName();
+    VarName x4 = freshVarName();
 
 //    (not d \/ c \/ not b \/ not a) /\ (b \/ not d \/ a \/ not c) /\ (b \/ c \/ a \/ d)
 //	/\ a
@@ -24,11 +24,16 @@ public class Test {
 //
 //    (a /\ b /\ not d)
 
-    Formula f = and(and(or(neg(d), or(c, or(neg(b), neg(a)))), and(or(b, or(neg(d), or(a, neg(c)))), or(b, or(c, or(a,d))))),
-            and(a,and(b,neg(d))));
+    Formula f = and(and(and(and(or(or(or(neg(var(x4)), var(x3)), neg(var(x2))), neg(var(x1))),
+            or(or(or(var(x2), neg(var(x4))), var(x1)), neg(var(x3)))),
+            or(or(or(var(x2), var(x3)), var(x1)), var(x4))),
+            or(or(or(neg(var(x4)), var(x1)), var(x2)), var(x3))),
+            or(or(or(neg(var(x1)), neg(var(x2))), neg(var(x3))), var(x4)));
+
+    f = and(f, or(or(neg(var(x2)), var(x3)), var(x4)));
 
     System.out.println("Formula f: " + f);
-    System.out.println("Formula in CNF, with more variables: " + cnf(f));
+    //System.out.println("Formula in CNF, with more variables: " + cnf(f));
     Set<VarName> trueVars = satisfiable(f);
     if (trueVars == null) {
       System.out.println("Not satisfiable");

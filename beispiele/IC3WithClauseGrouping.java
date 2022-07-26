@@ -130,7 +130,7 @@ public class IC3WithClauseGrouping {
     /*Loop through all the elements in each of the transition clauses, finding the absolute max. This indicates how
     many VarName variables are needed in the system
      */
-        for (int i = 0; i < transitionClauses.size(); i++) {
+    for (int i = 0; i < transitionClauses.size(); i++) {
         for (int j = 0; j < transitionClauses.get(i).size(); j++) {
             if (numberOfVars < Math.abs(transitionClauses.get(i).get(j))) {
                 //Short value of the new largest value
@@ -775,6 +775,50 @@ public class IC3WithClauseGrouping {
     }
 
     private static boolean erroneousPhase(int counter) throws TimeoutException, IOException {
+        /*  For all clauses c:
+                If 3 conditions hold, add c to all Fk
+                else add ¬s to all Fk
+             */
+
+        List<List<List<Integer>>> subclauses = getClause();
+        System.out.println("Subclauses: " + subclauses.size());
+
+        //do checks
+
+        //(F0 /\ s)
+        Formula check1 = listToFormula(initialClauses, false, false);
+        check1 = and(check1, counterExample);
+
+        if (!isSatisfiable(check1)) {
+            for (int i = 0; i < subclauses.size(); i++) {
+                for (int j = 0; j < subclauses.get(i).size(); j++) {
+                    System.out.println("Passed 1");
+                    //c must be negated
+
+                    //Fk /\ c
+                    Formula check2 = invariants.get(counter).getInvariant();
+                    check2 = and(check2, neg(clauseToFormula(subclauses.get(i).get(j),false,false)));
+
+                    if (!isSatisfiable(check2)){
+                        System.out.println("Passed 2");
+
+                        //¬s ∧ ¬c
+                        Formula check3 = neg(counterExample);
+                        check3 = and(check3, clauseToFormula(subclauses.get(i).get(j),false,false));
+
+                        if (!isSatisfiable(check3)){
+                            System.out.println("Passed 3");
+                        } else {
+                            System.out.println("Failed 3");
+                        }
+                    } else {
+                        System.out.println("Failed 2");
+                    }
+                }
+            }
+        }
+
+
         /*Check if the the first the counter example holds with the first invariant via F1 /\ ¬s /\ T => ¬s'
                 If this holds continue, otherwise there is a fault in the safety property
                  */
@@ -790,8 +834,6 @@ public class IC3WithClauseGrouping {
         if (!isSatisfiable(counterCheck)) {
 
             System.out.println("sat");
-
-            System.out.println(getClause(0,1));
 
             //Variable to count the latest invariant that ¬s holds in
             int l = 0;
@@ -853,12 +895,23 @@ public class IC3WithClauseGrouping {
         }
     }
 
-    private static Formula getClause(int counter, int length){
-        String clause = "";
-        for (int i = counter; i < length; i++) {
-            clause += counterClause.get(i) + " ";
+    private static List<List<List<Integer>>> getClause(){
+        CombinationFinder cf = new CombinationFinder();
+
+        List<List<List<Integer>>> subclauses = new ArrayList<>();
+
+        for (int i = 1; i < counterClause.size(); i++) {
+            List<List<Integer>> newSubclause = cf.printCombination(counterClause, counterClause.size(), i);
+            subclauses.add(newSubclause);
+            System.out.println(newSubclause);
         }
-        return clauseToFormula(counterClause.subList(counter, length),false,false);
+
+        return subclauses;
+
+//        List<Formula> clauseFormulas = new ArrayList<>();
+//        clauseFormulas.add(clauseToFormula(counterClause.subList(counter, counter+length),false,false));
+//        clauseFormulas.add(clauseToFormula(counterClause.subList(counter, counter+length),false,true));
+//        return clauseFormulas;
     }
 
     private static Formula clauseToFormula(List<Integer> clauseParsed, boolean negateFormula, boolean isPrimed){
