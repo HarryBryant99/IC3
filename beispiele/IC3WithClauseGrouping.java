@@ -775,50 +775,6 @@ public class IC3WithClauseGrouping {
     }
 
     private static boolean erroneousPhase(int counter) throws TimeoutException, IOException {
-        /*  For all clauses c:
-                If 3 conditions hold, add c to all Fk
-                else add ¬s to all Fk
-             */
-
-        List<List<List<Integer>>> subclauses = getClause();
-        System.out.println("Subclauses: " + subclauses.size());
-
-        //do checks
-
-        //(F0 /\ s)
-        Formula check1 = listToFormula(initialClauses, false, false);
-        check1 = and(check1, counterExample);
-
-        if (!isSatisfiable(check1)) {
-            for (int i = 0; i < subclauses.size(); i++) {
-                for (int j = 0; j < subclauses.get(i).size(); j++) {
-                    System.out.println("Passed 1");
-                    //c must be negated
-
-                    //Fk /\ c
-                    Formula check2 = invariants.get(counter).getInvariant();
-                    check2 = and(check2, neg(clauseToFormula(subclauses.get(i).get(j),false,false)));
-
-                    if (!isSatisfiable(check2)){
-                        System.out.println("Passed 2");
-
-                        //¬s ∧ ¬c
-                        Formula check3 = neg(counterExample);
-                        check3 = and(check3, clauseToFormula(subclauses.get(i).get(j),false,false));
-
-                        if (!isSatisfiable(check3)){
-                            System.out.println("Passed 3");
-                        } else {
-                            System.out.println("Failed 3");
-                        }
-                    } else {
-                        System.out.println("Failed 2");
-                    }
-                }
-            }
-        }
-
-
         /*Check if the the first the counter example holds with the first invariant via F1 /\ ¬s /\ T => ¬s'
                 If this holds continue, otherwise there is a fault in the safety property
                  */
@@ -827,13 +783,74 @@ public class IC3WithClauseGrouping {
         counterCheck = and(counterCheck, listToFormula(transitionClauses, false, false));
         counterCheck = and(counterCheck, (counterExamplePrimed));
 
-        /* If ¬(F1 /\ ¬s /\ T => ¬s) is unsatisfiable the safety property is fine so continue, otherwise break and
-        output that it is incorrect
-        */
         //if (isSatisfiable(neg(counterCheck))) {
         if (!isSatisfiable(counterCheck)) {
 
             System.out.println("sat");
+
+
+            /* If ¬(F1 /\ ¬s /\ T => ¬s) is unsatisfiable the safety property is fine so continue, otherwise break and
+            output that it is incorrect
+            */
+
+            /*  For all clauses c:
+                If 3 conditions hold, add c to all Fk
+                else add ¬s to all Fk
+             */
+
+            List<List<List<Integer>>> subclauses = getClause();
+            System.out.println("Subclauses: " + subclauses.size());
+
+            //do checks
+
+            //F0 => ¬s
+            //(F0 /\ s)
+            Formula check1 = listToFormula(initialClauses, false, false);
+            check1 = and(check1, counterExample);
+
+            System.out.println(check1 + ": " + !isSatisfiable(check1));
+
+            boolean subclauseFound = false;
+
+            if (!isSatisfiable(check1)) {
+                System.out.println("Passed Check 1");
+                if (!subclauseFound) {
+                    for (int i = 0; i < subclauses.size(); i++) {
+                        if (!subclauseFound) {
+                            for (int j = 0; j < subclauses.get(i).size(); j++) {
+                                System.out.println("\n" + subclauses.get(i).get(j));
+                                //c must be negated
+
+                                //Fk /\ c
+                                Formula check2 = invariants.get(counter).getInvariant();
+                                check2 = and(check2,
+                                        neg(clauseToFormula(subclauses.get(i).get(j), false, false)));
+
+                                if (!isSatisfiable(check2)) {
+                                    System.out.println("Passed Check 2");
+
+                                    // c subset ¬s
+                                    //s ∧ ¬c
+                                    Formula check3 = counterExample;
+                                    check3 = and(check3,
+                                            clauseToFormula(subclauses.get(i).get(j), false, false));
+
+                                    if (!isSatisfiable(check3)) {
+                                        System.out.println("Passed Check 3");
+                                        subclauseFound = true;
+                                        counterClause = subclauses.get(i).get(j);
+                                        break;
+                                    } else {
+                                        System.out.println("Failed Check 3");
+                                    }
+                                } else {
+                                    System.out.println("Failed Check 2");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             //Variable to count the latest invariant that ¬s holds in
             int l = 0;
