@@ -100,6 +100,9 @@ public class IC3WithClauseGrouping {
     //List of integers to represent the counter example in numeric form
     private static List<Integer> counterClause = new ArrayList<Integer>();
 
+    private static int numberOfCounterExamplesRemoved;
+    private static int numberOfSubclausesRemoved;
+
 //  do{
 //    invariantNew = listToFormula(safetyClauses,false, false);
 //    Holding or Erroneous
@@ -661,6 +664,9 @@ public class IC3WithClauseGrouping {
         for (int i = 0; i < invariants.size(); i++) {
             System.out.println("F" + (i + 1) + ": " + invariants.get(i).getInvariant());
         }
+
+        System.out.println("\nCounterexamples removed: " + numberOfCounterExamplesRemoved);
+        System.out.println("Subclauses removed: " + numberOfSubclausesRemoved);
     }
 
     /**
@@ -852,6 +858,12 @@ public class IC3WithClauseGrouping {
                 }
             }
 
+            if (subclauseFound){
+                numberOfSubclausesRemoved++;
+            }else{
+                numberOfCounterExamplesRemoved++;
+            }
+
             //Variable to count the latest invariant that ¬s holds in
             int l = 0;
 
@@ -898,6 +910,9 @@ public class IC3WithClauseGrouping {
             } while (isUnsat && (l < invariants.size()));
 
             System.out.println("Invariant clauses: " + invariantClauses);
+
+            System.out.println("\nCounterexamples removed: " + numberOfCounterExamplesRemoved);
+            System.out.println("Subclauses removed: " + numberOfSubclausesRemoved);
 
             //Set the old invariant to equal the new one
             invariantOld = invariantNew;
